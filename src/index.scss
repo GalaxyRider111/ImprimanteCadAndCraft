@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@200..800&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+// Culori VIM
+$cad-yellow: #FFC300; 
+$cad-black: #1D1D1D;
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Raleway', sans-serif;
+  
+  // --- SETĂRI FUNDAL SVG ---
+  background-color: $cad-yellow; // Culoare de siguranță (până se încarcă SVG-ul)
+  
+  // Importăm SVG-ul din folderul assets
+  background-image: url('./assets/bigabout.svg');
+  
+  // Cum să se comporte fundalul
+  background-repeat: repeat;      // Se repetă (pattern)
+  background-size: 2160px;         // Ajustează mărimea pattern-ului (poți pune mai mare sau mai mic)
+  background-attachment: fixed;   // Fundalul stă fix când dai scroll
+  background-position: center top;
+
+  color: $cad-black;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// Dacă mai ai blob-urile (formele animate), le poți ascunde sau face transparente 
+// ca să se vadă pattern-ul SVG
+.blob-container {
+  // display: none; // Decomentează asta dacă vrei să scoți de tot formele plutitoare
+  opacity: 0.4;     // Sau lasă-le mai șterse peste pattern
+}

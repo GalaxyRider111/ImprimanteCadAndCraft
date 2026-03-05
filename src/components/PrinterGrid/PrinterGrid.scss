@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Open+Sans:wght@400;600&display=swap');
+
+// Culori VIM
+$cad-green: #208A39;
+$cad-yellow: #FFC300;
+$cad-blue: #003566;
+$cad-white: #FFFFFF;
+$cad-orange: #F59E0B; // Portocaliu VIM-Style
+
+.printer-grid-container {
+  display: grid;
+  // Grid responsive pentru 20 elemente
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 25px;
+  padding: 10px;
+  padding-bottom: 50px;
+}
+
+.printer-card {
+  position: relative;
+  height: 300px;
+  border-radius: 20px;
+  overflow: hidden;
+  
+  // --- STAREA INIȚIALĂ (ALBĂ) ---
+  background: $cad-white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: default;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  // --- FONT GENERAL PENTRU CARD ---
+  font-family: 'Open Sans', sans-serif;
+
+  h2, h3, h4 { 
+    font-family: 'Montserrat', sans-serif; 
+    margin: 0 0 5px 0; 
+  }
+  
+  h3 {
+    font-size: 1.2rem; 
+    color: #1D1D1D; 
+    z-index: 2;
+  }
+
+  // --- NUMĂRUL DIN FUNDAL ---
+  .printer-number {
+    position: absolute;
+    bottom: -15px;
+    right: 0px;
+    font-size: 8rem;
+    font-family: 'Montserrat', sans-serif; // Font puternic pentru număr
+    font-weight: 800;
+    line-height: 1;
+    z-index: 0;
+    transition: color 0.3s;
+  }
+
+  // --- STATUSURI ---
+
+  // 1. DISPONIBILĂ (Verde)
+  &.available {
+    border: 3px solid $cad-green;
+    .icon-wrapper { 
+      background: $cad-white; color: $cad-green; 
+      border: 3px solid $cad-green;
+    }
+    .status-pill { color: $cad-green; font-weight: 700; }
+    .printer-number { color: rgba($cad-green, 0.1); } // Număr Verde pal
+    .action-btn { background: $cad-green; color: white; }
+    .slide-panel { background: rgba($cad-green, 0.95); color: white; }
+
+    &:hover {
+      background: rgba($cad-green, 0.1);
+      border-color: rgba($cad-green, 0.5);
+    }
+  }
+
+  // 2. PRINTING (Albastru)
+  &.printing {
+    border: 3px solid $cad-blue;
+    .icon-wrapper { 
+      background: $cad-white; color: $cad-blue;
+      border: 3px solid $cad-blue; 
+    }
+    .status-pill, .mini-timer { color: $cad-blue; font-weight: 700; }
+    .mini-timer { 
+      font-size: 1.6rem; 
+      font-family: 'Montserrat', sans-serif; // Timer cu Montserrat
+      font-weight: 700;
+      display: block; 
+      margin-top: 5px; 
+    }
+    .printer-number { color: rgba($cad-blue, 0.1); } // Număr Albastru pal
+    .slide-panel { background: rgba($cad-blue, 0.95); color: white; }
+
+    &:hover {
+      background: rgba($cad-blue, 0.1);
+      border-color: rgba($cad-blue, 0.5);
+    }
+  }
+
+  // 3. BOOKING / IN CURS DE COMPLETARE (PORTOCALIU)
+  &.booking {
+    border: 3px solid $cad-orange;
+
+    .icon-wrapper { 
+      background: $cad-white;
+      color: $cad-orange; 
+      border: 3px solid $cad-orange;
+    }
+    .status-pill { color: $cad-orange; font-weight: 700; }
+    .printer-number { color: rgba($cad-orange, 0.15); } // Număr Portocaliu pal
+    
+    // Panou Portocaliu
+    .slide-panel { background: rgba($cad-orange, 0.95); color: white; }
+
+    &:hover {
+      background: rgba($cad-orange, 0.1);
+      border-color: rgba($cad-orange, 0.5);
+    }
+  }
+
+  // 4. MAINTENANCE (Gri)
+  &.maintenance {
+    border: 3px solid #666;
+    .icon-wrapper { color: #666; border: 3px solid #666; background: white;}
+    .status-pill { color: #666; font-weight: 700; }
+    .printer-number { color: rgba(0,0,0, 0.1); }
+    .slide-panel { background: rgba(50, 50, 50, 0.95); color: white; }
+    &:hover { background: rgba(0,0,0,0.05); }
+  }
+
+  // --- ELEMENTE COMUNE ---
+  .status-display {
+    z-index: 1;
+    text-align: center;
+    width: 100%;
+    transition: opacity 0.3s ease;
+    
+    .icon-wrapper {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+    }
+  }
+
+  // SLIDE PANEL
+  .slide-panel {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    
+    &.hidden { transform: translateY(-100%) !important; }
+
+    .panel-content {
+      text-align: center;
+      .action-btn {
+         border: none; padding: 10px 20px; border-radius: 50px;
+         font-family: 'Montserrat', sans-serif; // Buton cu Montserrat
+         font-weight: 700; cursor: pointer; margin-top: 15px;
+         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+         &:hover { transform: scale(1.05); }
+      }
+      .user-badge {
+          margin-top: 10px; font-size: 0.9rem; background: rgba(0,0,0,0.2); 
+          padding: 5px 10px; border-radius: 10px; display: inline-flex; gap: 5px; align-items: center;
+      }
+    }
+  }
+
+  &:hover {
+    .slide-panel { transform: translateY(0); }
+    .status-display { opacity: 0.1; }
+    .printer-number { opacity: 0.05; } // Se șterge ușor la hover ca să nu încurce textul
+  }
+
+  // UPLOAD
+  .upload-overlay {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 10; padding: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transform: translateY(100%); transition: transform 0.4s ease-in-out;
+    border-top: 5px solid $cad-green;
+
+    &.active { transform: translateY(0); }
+    
+    .close-btn { position: absolute; top: 10px; right: 10px; border:none; background:none; cursor: pointer;}
+    .drag-drop-area { flex: 1; margin: 10px 0; border: 2px dashed #ccc; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; background: #f9f9f9; color: $cad-blue; }
+    .confirm-print-btn { 
+      background: $cad-green; 
+      color: white; 
+      padding: 10px; 
+      border: none; 
+      border-radius: 8px; 
+      font-family: 'Montserrat', sans-serif; // Buton confirmare cu Montserrat
+      font-weight: 700; 
+      cursor: pointer;
+    }
+  }
+}

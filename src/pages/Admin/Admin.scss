@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Open+Sans:wght@400;600&display=swap');
+
+$cad-green: #208A39;
+$cad-yellow: #FFC300;
+$cad-blue: #003566;
+$cad-white: #FFFFFF;
+$cad-orange: #F59E0B;
+$cad-gray: #f4f6f8;
+$cad-dark-gray: #e2e8f0;
+
+.admin-dashboard-page {
+  min-height: 100vh;
+  background-color: $cad-gray; // Fundal gri deschis foarte curat
+  font-family: 'Open Sans', sans-serif;
+  color: #333;
+
+  // --- HEADER ---
+  .admin-header {
+    background: $cad-blue; // Header albastru solid
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+
+      .admin-logo {
+        height: 50px;
+        background: $cad-white;
+        padding: 5px 15px;
+        border-radius: 30px;
+      }
+
+      .admin-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        h1 {
+          font-family: 'Montserrat', sans-serif;
+          color: $cad-white;
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 800;
+        }
+
+        .badge {
+          background: $cad-yellow;
+          color: $cad-blue;
+          font-family: 'Montserrat', sans-serif;
+          font-weight: 800;
+          font-size: 0.7rem;
+          padding: 4px 10px;
+          border-radius: 10px;
+        }
+      }
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: $cad-white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: $cad-yellow;
+        color: $cad-blue;
+        border-color: $cad-yellow;
+      }
+    }
+  }
+
+  // --- CONTENT ---
+  .admin-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 50px; // Spațiu generos între cele 2 tabele
+
+    .admin-section {
+      
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 20px;
+
+        h2 {
+          font-family: 'Montserrat', sans-serif;
+          color: $cad-blue;
+          font-size: 1.8rem;
+          font-weight: 800;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .stats {
+          font-weight: 600;
+          color: #666;
+          font-size: 0.95rem;
+        }
+      }
+
+      // --- TABELE ---
+      .table-container {
+        background: $cad-white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        overflow: hidden; // Să păstreze colțurile rotunde
+        border: 1px solid $cad-dark-gray;
+
+        .admin-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+
+          th {
+            background: #f8fafc;
+            padding: 18px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: $cad-blue;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid $cad-dark-gray;
+          }
+
+          td {
+            padding: 15px 20px;
+            border-bottom: 1px solid $cad-dark-gray;
+            vertical-align: middle;
+            font-size: 0.95rem;
+
+            &.id-col { font-weight: 700; color: #888; }
+            &.name-col { font-weight: 700; color: $cad-blue; font-family: 'Montserrat', sans-serif; }
+            &.user-col { font-weight: 600; }
+            &.time-col { font-family: monospace; font-weight: 700; font-size: 1.1rem; color: $cad-blue; }
+
+            // BADGES
+            .status-badge {
+              display: inline-block;
+              padding: 6px 12px;
+              border-radius: 20px;
+              font-size: 0.8rem;
+              font-weight: 700;
+              font-family: 'Montserrat', sans-serif;
+              
+              &.printing { background: rgba($cad-blue, 0.1); color: $cad-blue; }
+              &.available { background: rgba($cad-green, 0.1); color: $cad-green; }
+              &.booking { background: rgba($cad-orange, 0.1); color: $cad-orange; }
+              &.maintenance { background: #fee2e2; color: #dc2626; } // Roșu pt mentenanță
+            }
+
+            .role-badge {
+              padding: 6px 12px;
+              border-radius: 20px;
+              font-size: 0.8rem;
+              font-weight: 700;
+              font-family: 'Montserrat', sans-serif;
+
+              &.admin { background: rgba($cad-yellow, 0.3); color: $cad-blue; }
+              &.user { background: #f1f5f9; color: #64748b; }
+            }
+
+            // ACTIONS & BUTTONS
+            &.actions-col {
+              display: flex;
+              gap: 10px;
+              align-items: center;
+
+              button {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 0.8rem;
+                font-weight: 700;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+
+                &.btn-cancel {
+                  background: #fee2e2; color: #dc2626;
+                  &:hover { background: #fca5a5; }
+                }
+
+                &.btn-maintenance {
+                  background: #f1f5f9; color: #475569;
+                  &:hover { background: #e2e8f0; }
+                }
+
+                &.btn-repair {
+                  background: rgba($cad-green, 0.1); color: $cad-green;
+                  &:hover { background: rgba($cad-green, 0.2); }
+                }
+              }
+
+              .role-select {
+                padding: 8px 15px;
+                border-radius: 8px;
+                border: 2px solid $cad-dark-gray;
+                font-family: 'Montserrat', sans-serif;
+                font-weight: 700;
+                color: $cad-blue;
+                outline: none;
+                cursor: pointer;
+                &:focus { border-color: $cad-blue; }
+              }
+            }
+          }
+
+          tr:last-child td {
+            border-bottom: none;
+          }
+          
+          tr:hover td {
+            background: #f8fafc; // Highlight subtil la hover pe rând
+          }
+        }
+      }
+    }
+  }
+}

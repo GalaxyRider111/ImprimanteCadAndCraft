@@ -1,0 +1,155 @@
+// Importăm fonturile (dacă nu le ai deja importate global în index.scss)
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Open+Sans:wght@400;600&display=swap');
+
+// Culori VIM
+$cad-green: #208A39;
+$cad-yellow: #FFC300;
+$cad-blue: #003566;
+$cad-white: #FFFFFF;
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  // Fundalul galben este preluat din body (index.scss)
+
+  .login-card {
+    background: $cad-white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 30px;
+    padding: 50px 40px;
+    box-shadow: 0 20px 50px rgba(0, 53, 102, 0.2);
+    border: 4px solid $cad-blue; // Contur puternic, specific brandului
+    font-family: 'Open Sans', sans-serif;
+
+    .login-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Centrează orizontal logo-ul și textul
+      text-align: center;
+      margin-bottom: 40px;
+
+      // Logo-ul curat, mare, fără fundal
+      .login-logo-clean {
+        height: auto;
+        width: 180px; // Lățime mare pentru a ieși în evidență
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+        margin-bottom: 25px; // Spațiu până la text
+        display: block;
+      }
+
+      h2 {
+        font-family: 'Montserrat', sans-serif;
+        color: $cad-blue;
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+      }
+
+      p {
+        color: #666;
+        margin: 0;
+        font-weight: 600;
+      }
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        label {
+          font-family: 'Montserrat', sans-serif;
+          font-weight: 700;
+          color: $cad-blue;
+          font-size: 0.9rem;
+        }
+
+        .input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+
+          .input-icon {
+            position: absolute;
+            left: 15px;
+            color: #999;
+            transition: color 0.3s;
+          }
+
+          input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e1e1e1;
+            border-radius: 15px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            background: #f9f9f9;
+            color: #1D1D1D;
+
+            &::placeholder {
+              color: #bbb;
+            }
+
+            // Efect la click pe input
+            &:focus {
+              border-color: $cad-green;
+              background: $cad-white;
+              box-shadow: 0 0 0 4px rgba($cad-green, 0.1);
+
+              // Când input-ul e selectat, iconița devine verde
+              & + .input-icon, 
+              ~ .input-icon {
+                color: $cad-green;
+              }
+            }
+          }
+        }
+      }
+
+      .login-btn {
+        background: $cad-green;
+        color: $cad-white;
+        border: none;
+        padding: 16px;
+        border-radius: 15px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+        
+        // Efect 3D solid
+        box-shadow: 0 6px 0 darken($cad-green, 10%);
+        transition: all 0.1s;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 0 darken($cad-green, 10%);
+        }
+
+        &:active {
+          transform: translateY(4px);
+          box-shadow: 0 2px 0 darken($cad-green, 10%);
+        }
+      }
+    }
+  }
+}

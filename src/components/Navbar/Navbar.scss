@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Open+Sans:wght@400;600&display=swap');
+
+// Culori VIM
+$cad-green: #208A39;
+$cad-yellow: #FFC300;
+$cad-blue: #003566;
+$cad-white: #FFFFFF;
+
+.navbar {
+  font-family: 'Open Sans', sans-serif; // Font general pentru tot textul din navbar
+  width: calc(100% - 60px);
+  max-width: 1400px;
+  height: 110px; // 1. Navbar mai înalt pentru logo mare
+  margin: 30px auto 0 auto;
+  padding: 0 2rem;
+  
+  // 2. FĂRĂ GRADIENT - Culoare solidă (cu puțină transparență pentru blur)
+  background-color: rgba(32, 138, 57, 0.95); 
+  
+  backdrop-filter: blur(12px); // Păstrăm blur-ul fin
+  -webkit-backdrop-filter: blur(12px);
+  
+  border-radius: 30px; // Rotunjire mai mare
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  // Umbră solidă, nu difuză
+  box-shadow: 0 10px 25px rgba(0, 53, 102, 0.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 100;
+
+  // --- STÂNGA: LOGO BOX ---
+  .navbar-left {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 100%;
+
+  .logo-box {
+    background-color: $cad-white;
+    
+    // 1. MARGINI ALBE MICI (Padding redus drastic)
+    height: 90px;         
+    padding: 0 15px;        
+    
+    border-radius: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    
+    // 2. LOGO SI MAI MARE (Aproape cat toata bara)
+    .logo-img {
+        height: 100%;   // Logoul va ocupa cât îi permite înălțimea cutiei
+        max-height: 120px; // Ne asigurăm că nu atinge marginile (90px cutia - 10px aer)
+        width: auto;
+        display: block; // Elimină spațiile fantomă de sub imagini
+        object-fit: contain;
+    }
+  }
+}
+
+  // --- CENTRU ---
+  .navbar-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10; // Ne asigurăm că stă deasupra
+    
+    .team-name {
+      font-family: 'Montserrat', sans-serif; // Aplicat Montserrat aici
+      font-size: 1.6rem; // Text puțin mai mare și vizibil
+      font-weight: 800;  // Font mai gros (Bold)
+      color: $cad-white; // Text Alb
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      
+      // --- FUNDAL CARE IESE ÎN EVIDENȚĂ ---
+      background-color: $cad-blue; // Albastru Solid (#003566) - Contrast maxim cu verdele
+      
+      padding: 12px 40px; // Mai lat pentru a arăta ca o etichetă serioasă
+      border-radius: 50px; // Păstrăm forma de pastilă
+      
+      // --- DETALII VIZUALE ---
+      border: 3px solid $cad-yellow; // Contur Galben Gros (#FFC300)
+      
+      // Umbră pentru a-l desprinde de fundal (Efect 3D)
+      box-shadow: 0 8px 20px rgba(0, 53, 102, 0.4); 
+      
+      // Opțional: Umbră fină la text pentru lizibilitate
+      text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+      
+      white-space: nowrap;
+    }
+  }
+
+  // --- DREAPTA ---
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 2;
+
+    .user-info {
+      font-weight: 700;
+      font-size: 1rem;
+      color: $cad-white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      // --- FUNDAL VERDE MAI DESCHIS (Capsulă) ---
+      // Folosim alb cu transparență redusă pentru a "ilumina" verdele din spate
+      background-color: rgba(255, 255, 255, 0.15); 
+      
+      // Alternativ, dacă vrei un verde solid specific: 
+      // background-color: #38b055;
+
+      padding: 10px 20px; // Spațiu interior
+      border-radius: 50px; // Rotunjit
+      border: 1px solid rgba(255, 255, 255, 0.2); // Contur fin
+      
+      // Efect hover opțional
+      transition: background 0.3s;
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+      }
+    }
+    
+    // ... butonul de logout rămâne la fel ...
+    .logout-btn {
+        background-color: $cad-yellow;
+        border: none;
+        color: $cad-blue;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-family: 'Montserrat', sans-serif; // Aplicat Montserrat aici
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 5px 0 darken($cad-yellow, 10%);
+        transition: transform 0.1s;
+    
+        &:hover {
+            transform: translateY(-2px);
+        }
+        
+        &:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 darken($cad-yellow, 10%);
+        }
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    height: 80px; // Mai mic pe mobil
+    padding: 0 1rem;
+    width: calc(100% - 20px);
+
+    .navbar-left .logo-box {
+        padding: 5px 15px;
+        .logo-img { height: 50px; } // Ajustat pentru mobil
+    }
+    
+    .navbar-center { display: none; }
+    .user-info span { display: none; }
+    .logout-btn span { display: none; }
+  }
+}
