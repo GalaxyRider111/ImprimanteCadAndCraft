@@ -1,21 +1,104 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { User, Lock, LogIn, KeyRound } from 'lucide-react'; // Am înlocuit Mail cu User și am adăugat KeyRound
 import './Login.scss';
 import logoImg from '../../assets/logo.svg';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  
+  // Stările pentru formularul de login
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Stările noi pentru logica de backend
+  const [error, setError] = useState('');
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [tempToken, setTempToken] = useState(''); // Păstrăm temporar token-ul până schimbă parola
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simulare login: Dacă e admin@test.com merge la admin, altfel la dashboard
-    if (email === 'admin@test.com') {
-      navigate('/admin');
-    } else {
-      navigate('/dashboard');
+    setError('');
+
+    try {
+      // 1. Încercăm mai întâi să ne logăm ca Participant
+      let res = await fetch('http://localhost:3000/api/auth/participant-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      let data = await res.json();
+
+      if (res.ok) {
+        // Dacă e prima logare, oprim navigarea și afișăm formularul de schimbare parolă
+        if (data.requirePasswordChange) {
+          setTempToken(data.token);
+          setNeedsPasswordChange(true);
+          return;
+        }
+        
+        // Dacă a mai intrat pe cont, îl lăsăm direct în Dashboard
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('teamId', data.teamId);
+        localStorage.setItem('role', 'participant');
+        navigate('/dashboard');
+        return;
+      }
+
+      // 2. Dacă username-ul nu există la participanți, încercăm la Admin
+      if (data.message === "Username incorect.") {
+        const adminRes = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const adminData = await adminRes.json();
+
+        if (adminRes.ok) {
+          localStorage.setItem('token', adminData.token);
+          localStorage.setItem('role', 'admin');
+          navigate('/admin');
+          return;
+        } else {
+          setError(adminData.message || adminData.error || 'Parolă admin greșită.');
+          return;
+        }
+      }
+
+      // 3. Dacă e altă eroare (ex: Parolă participant greșită)
+      setError(data.message || 'Eroare la autentificare');
+
+    } catch (err) {
+      setError('Nu s-a putut conecta la server. Verifică dacă backend-ul este pornit.');
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      const res = await fetch('http://localhost:3000/api/auth/change-password', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tempToken}` // Ne folosim de legitimația temporară
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        // Parola a fost schimbată cu succes! Acum îl logăm oficial.
+        localStorage.setItem('token', tempToken);
+        localStorage.setItem('role', 'participant');
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Eroare la schimbarea parolei.');
+      }
+    } catch (err) {
+      setError('Eroare de conexiune.');
     }
   };
 
@@ -23,47 +106,79 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          {/* --- MODIFICARE AICI: Imaginea este directă, fără container --- */}
           <img src={logoImg} alt="CAD&CRAFT Logo" className="login-logo-clean" />
           
-          <h2>Bine ai venit!</h2>
-          <p>Autentifică-te pentru a accesa platforma</p>
+          {/* Schimbăm textul în funcție de ecranul pe care suntem */}
+          <h2>{needsPasswordChange ? "Securizare Cont" : "Bine ai venit!"}</h2>
+          <p>{needsPasswordChange 
+            ? "Fiind prima logare, te rugăm să alegi o parolă nouă." 
+            : "Autentifică-te pentru a accesa platforma"}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="login-form">
-          <div className="input-group">
-            <label>Email</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" size={20} />
-              <input 
-                type="email" 
-                placeholder="nume@mail.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+        {/* Afișarea erorilor */}
+        {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '15px' }}>{error}</div>}
 
-          <div className="input-group">
-            <label>Parolă</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" size={20} />
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+        {/* ECRANUL 1: LOGIN NORMAL */}
+        {!needsPasswordChange ? (
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="input-group">
+              <label>Utilizator</label>
+              <div className="input-wrapper">
+                <User className="input-icon" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="nume.utilizator" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <button type="submit" className="login-btn">
-            <LogIn size={20} />
-            <span>Intră în cont</span>
-          </button>
-        </form>
+            <div className="input-group">
+              <label>Parolă</label>
+              <div className="input-wrapper">
+                <Lock className="input-icon" size={20} />
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="login-btn">
+              <LogIn size={20} />
+              <span>Intră în cont</span>
+            </button>
+          </form>
+        ) : (
+          /* ECRANUL 2: SCHIMBARE PAROLĂ OBLIGATORIE */
+          <form onSubmit={handlePasswordChange} className="login-form">
+            <div className="input-group">
+              <label>Parolă Nouă (Minim 6 caractere)</label>
+              <div className="input-wrapper">
+                <KeyRound className="input-icon" size={20} />
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={6}
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="login-btn">
+              <Lock size={20} />
+              <span>Salvează și Continuă</span>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

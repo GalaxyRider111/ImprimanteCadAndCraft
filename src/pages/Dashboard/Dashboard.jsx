@@ -5,16 +5,23 @@ import PrinterGrid from '../../components/PrinterGrid/PrinterGrid.jsx';
 
 function Dashboard() {
   const navigate = useNavigate();
-  const userName = "Andrei Constantinescu";
+  // Ideal, acest nume ar trebui scos din Token-ul salvat, dar îl putem lăsa așa pentru design momentan.
+  const userName = "Participant CAD&CRAFT"; 
 
   // Funcția pentru butonul de logout din Navbar
   const handleLogout = () => {
+    // 1. Ștergem datele din browser ca să îi tăiem accesul
+    localStorage.removeItem('token');
+    localStorage.removeItem('teamId');
+    localStorage.removeItem('role');
+    
+    // 2. Îl trimitem înapoi la login
     navigate('/login');
   };
 
   return (
     <div className="dashboard-page">
-      {/* Background Blobs (dacă le mai folosești) */}
+      {/* Background Blobs */}
       <div className="blob-container">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>

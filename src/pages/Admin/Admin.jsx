@@ -1,101 +1,174 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Printer, Users, CheckCircle, Wrench, XCircle } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { LogOut, Printer, Users, CheckCircle, Wrench, XCircle, Play, Download, CheckSquare } from 'lucide-react';
 import './Admin.scss';
 import logoImg from '../../assets/logo.svg';
 
 const Admin = () => {
   const navigate = useNavigate();
-
-  // --- STATE: IMPRIMANTE (Toate cele 20) ---
-  const [printers, setPrinters] = useState([
-    { id: 1, name: 'Prusa MK4 #1', status: 'printing', secondsLeft: 4681, fileName: 'roti_robot.stl', user: 'Matei Popa' },
-    { id: 2, name: 'Prusa MK4 #2', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 3, name: 'Prusa Mini #1', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 4, name: 'Prusa Mini #2', status: 'booking', secondsLeft: 240, fileName: 'setup...', user: 'Elena Vlad' },
-    { id: 5, name: 'Prusa XL', status: 'printing', secondsLeft: 12400, fileName: 'chassis_v3.stl', user: 'Andrei C.' },
-    { id: 6, name: 'Bambu X1C #1', status: 'printing', secondsLeft: 1200, fileName: 'drone_frame.stl', user: 'Victor M.' },
-    { id: 7, name: 'Bambu X1C #2', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 8, name: 'Bambu P1P #1', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 9, name: 'Bambu P1P #2', status: 'booking', secondsLeft: 180, fileName: 'setup...', user: 'Alexandru D.' },
-    { id: 10, name: 'Bambu A1 Mini', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 11, name: 'Ender 3 V3 #1', status: 'maintenance', secondsLeft: 0, fileName: null, user: null },
-    { id: 12, name: 'Ender 3 V3 #2', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 13, name: 'Ender 5 Plus', status: 'printing', secondsLeft: 8400, fileName: 'helmet_prop.stl', user: 'Cosmin R.' },
-    { id: 14, name: 'CR-10 Smart', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 15, name: 'K1 Max', status: 'booking', secondsLeft: 60, fileName: 'setup...', user: 'Diana F.' },
-    { id: 16, name: 'Anycubic Mono', status: 'available', secondsLeft: 0, fileName: null, user: null },
-    { id: 17, name: 'Elegoo Saturn', status: 'printing', secondsLeft: 3600, fileName: 'miniature.stl', user: 'Vlad T.' },
-    { id: 18, name: 'Formlabs 3+', status: 'maintenance', secondsLeft: 0, fileName: null, user: null },
-    { id: 19, name: 'Voron 2.4', status: 'printing', secondsLeft: 500, fileName: 'gear_test.stl', user: 'Admin' },
-    { id: 20, name: 'RatRig V-Core', status: 'available', secondsLeft: 0, fileName: null, user: null },
-  ]);
-
-  // --- STATE: UTILIZATORI ---
+  const [printers, setPrinters] = useState([]);
+  
+  // Utilizatorii sunt doar de formă momentan, deoarece logica noastră de echipe din backend e puțin diferită. 
+  // Păstrăm secțiunea de UI ca să nu stricăm designul, dar le lăsăm "fake".
   const [users, setUsers] = useState([
     { id: 101, name: 'Andrei Constantinescu', email: 'andrei@raptor.ro', role: 'admin' },
-    { id: 102, name: 'Matei Popa', email: 'matei@raptor.ro', role: 'user' },
-    { id: 103, name: 'Elena Vlad', email: 'elena@raptor.ro', role: 'user' },
-    { id: 104, name: 'Victor Munteanu', email: 'victor@raptor.ro', role: 'user' },
-    { id: 105, name: 'Cosmin Radu', email: 'cosmin@raptor.ro', role: 'admin' },
+    { id: 102, name: 'Concurent Test', email: 'concurent@raptor.ro', role: 'user' },
   ]);
 
-  // --- TIMER SIMPLIFICAT (scade timpul pt cele active) ---
+  // --- 1. ADUCEREA DATELOR REALE ---
+  const fetchPrinters = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:3000/api/admin/printers', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      // Dacă adminul nu e autorizat, îl dăm afară
+      if (res.status === 401 || res.status === 403) {
+        navigate('/login');
+        return;
+      }
+
+      // Formatăm datele din Firebase pentru tabel
+      const formattedPrinters = data.map(p => {
+        let secondsLeft = 0;
+        let userName = '-';
+        let fileName = '-';
+
+        if (p.teamDetails) {
+          userName = p.teamDetails.teamName || 'Echipă Necunoscută';
+          // Dacă are un fișier în Cloudinary, afișăm doar textul 'Descarcă STL'
+          fileName = p.teamDetails.fileUrl ? 'Da' : '-';
+        }
+
+        if (p.estimatedEndTime) {
+          const endTimeMs = p.estimatedEndTime._seconds 
+                              ? p.estimatedEndTime._seconds * 1000 
+      :   new Date(p.estimatedEndTime).getTime();
+
+           const now = new Date().getTime();
+          secondsLeft = Math.max(0, Math.floor((endTimeMs - now) / 1000));
+        }
+
+        return {
+          id: p.id,
+          name: p.name,
+          status: p.status, // statusul brut din firebase
+          secondsLeft: secondsLeft,
+          fileName: fileName,
+          user: userName,
+          currentTeamId: p.currentTeam, // Avem nevoie de ID-ul echipei pentru download
+          fileUrl: p.teamDetails?.fileUrl
+        };
+      });
+
+      setPrinters(formattedPrinters);
+    } catch (error) {
+      console.error("Eroare la aducerea imprimantelor pentru admin:", error);
+    }
+  };
+
+  // --- 2. WEBSOCKETS ȘI TIMER LOCAL ---
   useEffect(() => {
+    fetchPrinters();
+
+    const socket = io('http://localhost:3000');
+    socket.on('printersUpdated', () => {
+      fetchPrinters();
+    });
+
     const timer = setInterval(() => {
       setPrinters(current => current.map(p => {
-        if (p.secondsLeft > 0 && p.status !== 'maintenance') {
+        if (p.secondsLeft > 0 && p.status === 'occupied') {
           return { ...p, secondsLeft: p.secondsLeft - 1 };
-        }
-        if (p.secondsLeft === 0 && p.status === 'booking') {
-          return { ...p, status: 'available', user: null, fileName: null };
         }
         return p;
       }));
     }, 1000);
-    return () => clearInterval(timer);
+
+    return () => {
+      clearInterval(timer);
+      socket.disconnect();
+    };
   }, []);
 
   const formatTime = (sec) => {
-    if (!sec) return "-";
+    if (!sec || sec === 0) return "-";
     const h = Math.floor(sec / 3600).toString().padStart(2, '0');
     const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${h}:${m}:${s}`;
   };
 
-  // --- ACȚIUNI IMPRIMANTE ---
-  const cancelPrint = (id) => {
-    if(window.confirm("Sigur vrei să anulezi acest print/rezervare?")) {
-      setPrinters(current => current.map(p => 
-        p.id === id ? { ...p, status: 'available', secondsLeft: 0, user: null, fileName: null } : p
-      ));
+  // --- 3. ACȚIUNI REALE ADMIN ---
+
+  const handleDownload = (teamId) => {
+    const token = localStorage.getItem('token');
+    // Deschidem link-ul de redirect de la backend într-un tab nou
+    window.open(`http://localhost:3000/api/admin/download/${teamId}?token=${token}`, '_blank');
+  };
+
+  const handleStartPrint = async (printerId) => {
+    const min = prompt("Câte minute durează printul?");
+    if (!min || isNaN(min)) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      await fetch('http://localhost:3000/api/admin/assign', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ printerId, durationInMinutes: parseInt(min) })
+      });
+      // Nu dăm refetch aici, pentru că va veni semnalul prin Socket
+    } catch (err) {
+      alert("Eroare la pornirea printului.");
     }
   };
 
-  const toggleMaintenance = (id, currentStatus) => {
-    setPrinters(current => current.map(p => {
-      if (p.id === id) {
-        if (currentStatus === 'maintenance') {
-          return { ...p, status: 'available' };
-        } else {
-          return { ...p, status: 'maintenance', secondsLeft: 0, user: null, fileName: null };
-        }
-      }
-      return p;
-    }));
+  const handleCompletePrint = async (printerId) => {
+    if(!window.confirm("Sigur vrei să eliberezi imprimanta?")) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:3000/api/admin/complete/${printerId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {
+      alert("Eroare la eliberare.");
+    }
   };
 
-  // --- ACȚIUNI UTILIZATORI ---
-  const changeUserRole = (id, newRole) => {
-    setUsers(current => current.map(u => 
-      u.id === id ? { ...u, role: newRole } : u
-    ));
+  const toggleMaintenance = async (printerId, currentStatus) => {
+    const newStatus = currentStatus === 'maintenance' ? 'free' : 'maintenance';
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:3000/api/admin/printers/${printerId}/log`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ message: `Status schimbat manual în ${newStatus}`, status: newStatus })
+      });
+    } catch (err) {
+      alert("Eroare la schimbarea statusului.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    navigate('/login');
   };
 
   return (
     <div className="admin-dashboard-page">
-      {/* HEADER SIMPLU ȘI CURAT */}
       <header className="admin-header">
         <div className="header-left">
           <img src={logoImg} alt="CAD&CRAFT" className="admin-logo" />
@@ -104,7 +177,7 @@ const Admin = () => {
             <span className="badge">ADMIN</span>
           </div>
         </div>
-        <button className="logout-btn" onClick={() => navigate('/login')}>
+        <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={18} /> Deconectare
         </button>
       </header>
@@ -117,8 +190,8 @@ const Admin = () => {
             <h2><Printer size={24} /> Management Imprimante</h2>
             <div className="stats">
                Total: {printers.length} | 
-               Active: {printers.filter(p => p.status === 'printing').length} | 
-               Mentenanță: {printers.filter(p => p.status === 'maintenance').length}
+               Active: {printers.filter(p => p.status === 'occupied').length} | 
+               În Așteptare: {printers.filter(p => p.status === 'pending_admin').length}
             </div>
           </div>
           
@@ -126,48 +199,74 @@ const Admin = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Imprimantă</th>
+                  <th>Nume Imprimantă</th>
                   <th>Status</th>
-                  <th>Utilizator</th>
-                  <th>Fișier</th>
+                  <th>Echipă</th>
+                  <th>Fișier (STL)</th>
                   <th>Timp Rămas</th>
-                  <th>Acțiuni</th>
+                  <th>Acțiuni Admin</th>
                 </tr>
               </thead>
               <tbody>
                 {printers.map(printer => (
                   <tr key={printer.id}>
-                    <td className="id-col">#{printer.id}</td>
                     <td className="name-col">{printer.name}</td>
                     <td>
                       <span className={`status-badge ${printer.status}`}>
-                        {printer.status === 'printing' && 'În Printare'}
-                        {printer.status === 'available' && 'Liberă'}
-                        {printer.status === 'booking' && 'Configurare'}
+                        {printer.status === 'free' && 'Liberă'}
+                        {printer.status === 'reserving' && 'Echipa încarcă...'}
+                        {printer.status === 'pending_admin' && 'Așteaptă Start'}
+                        {printer.status === 'occupied' && 'În Printare'}
                         {printer.status === 'maintenance' && 'Mentenanță'}
                       </span>
                     </td>
-                    <td className="user-col">{printer.user || '-'}</td>
-                    <td className="file-col">{printer.fileName || '-'}</td>
+                    <td className="user-col">{printer.user}</td>
+                    <td className="file-col">
+                      {printer.fileUrl ? (
+                        <button className="btn-repair" style={{padding: '5px 10px'}} onClick={() => window.open(printer.fileUrl, '_blank')}>
+                          <Download size={16} /> Descarcă
+                        </button>
+                      ) : '-'}
+                    </td>
                     <td className="time-col">{formatTime(printer.secondsLeft)}</td>
                     <td className="actions-col">
-                      {(printer.status === 'printing' || printer.status === 'booking') && (
-                        <button className="btn-cancel" onClick={() => cancelPrint(printer.id)} title="Anulează">
-                          <XCircle size={18} /> Anulează
-                        </button>
-                      )}
-                      
-                      {printer.status === 'maintenance' ? (
-                        <button className="btn-repair" onClick={() => toggleMaintenance(printer.id, printer.status)}>
-                          <CheckCircle size={18} /> Reparata (Activare)
-                        </button>
-                      ) : (
-                        <button className="btn-maintenance" onClick={() => toggleMaintenance(printer.id, printer.status)} title="Pune în mentenanță">
-                          <Wrench size={18} /> Mentenanță
-                        </button>
-                      )}
-                    </td>
+  
+  {/* 1. BUTON START: Apare DOAR când fișierul este urcat și așteaptă aprobarea */}
+  {printer.status === 'pending_admin' && (
+    <button 
+      className="btn-maintenance" 
+      style={{ backgroundColor: '#28a745', color: 'white', border: 'none' }} 
+      onClick={() => handleStartPrint(printer.id)}
+    >
+      <Play size={18} /> Start Print
+    </button>
+  )}
+
+  {/* 2. BUTON FINALIZAT: Apare DOAR când printarea este efectiv pornită (occupied) */}
+  {printer.status === 'occupied' && (
+    <button 
+      className="btn-repair" 
+      style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }}
+      onClick={() => handleCompletePrint(printer.id)} 
+      title="Eliberează imprimanta"
+    >
+      <CheckSquare size={18} /> Finalizează
+    </button>
+  )}
+  
+  {/* 3. BUTOANE MENTENANȚĂ: Apar doar dacă imprimanta e liberă sau deja în mentenanță */}
+  {(printer.status === 'free' || printer.status === 'maintenance') && (
+    printer.status === 'maintenance' ? (
+      <button className="btn-repair" onClick={() => toggleMaintenance(printer.id, printer.status)}>
+        <CheckCircle size={18} /> Reparată
+      </button>
+    ) : (
+      <button className="btn-maintenance" onClick={() => toggleMaintenance(printer.id, printer.status)}>
+        <Wrench size={18} /> Mentenanță
+      </button>
+    )
+  )}
+</td>
                   </tr>
                 ))}
               </tbody>
@@ -175,12 +274,11 @@ const Admin = () => {
           </div>
         </section>
 
-        {/* SECȚIUNEA 2: UTILIZATORI */}
+        {/* SECȚIUNEA 2: UTILIZATORI (UI doar de design momentan) */}
         <section className="admin-section">
           <div className="section-header">
-            <h2><Users size={24} /> Management Utilizatori</h2>
+            <h2><Users size={24} /> Management Utilizatori (UI Mockup)</h2>
           </div>
-          
           <div className="table-container">
             <table className="admin-table">
               <thead>
@@ -188,7 +286,6 @@ const Admin = () => {
                   <th>Nume Complet</th>
                   <th>Email</th>
                   <th>Rol Curent</th>
-                  <th>Modifică Rol</th>
                 </tr>
               </thead>
               <tbody>
@@ -196,21 +293,7 @@ const Admin = () => {
                   <tr key={user.id}>
                     <td className="name-col">{user.name}</td>
                     <td>{user.email}</td>
-                    <td>
-                      <span className={`role-badge ${user.role}`}>
-                        {user.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="actions-col">
-                      <select 
-                        className="role-select" 
-                        value={user.role} 
-                        onChange={(e) => changeUserRole(user.id, e.target.value)}
-                      >
-                        <option value="user">USER</option>
-                        <option value="admin">ADMIN</option>
-                      </select>
-                    </td>
+                    <td><span className={`role-badge ${user.role}`}>{user.role.toUpperCase()}</span></td>
                   </tr>
                 ))}
               </tbody>
