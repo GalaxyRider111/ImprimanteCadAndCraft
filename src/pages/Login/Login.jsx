@@ -107,27 +107,37 @@ const Login = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}` // Ne folosim de legitimația temporară
+          'Authorization': `Bearer ${tempToken}` 
         },
-        body: JSON.stringify({ newPassword })
+        // --- MODIFICARE AICI: Trimitem și parola veche, pe care o avem deja în state! ---
+        body: JSON.stringify({ 
+          username: username, 
+          oldPassword: password, 
+          newPassword: newPassword 
+        })
       });
 
+      // --- MODIFICARE AICI: Citim răspunsul ÎNAINTE să dăm kick ---
+      const data = await res.json(); 
+
       if (res.status === 401) {
-    // Ștergem token-ul vechi ca să nu mai încerce să se logheze automat
-    localStorage.removeItem('token'); 
-    
-    // Îi dăm o alertă vizuală
-    alert("Sesiune expirată! Te-ai conectat de pe alt dispozitiv. Vei fi redirecționat către Login.");
-    
-    // Îl aruncăm efectiv afară din pagină, înapoi la Login
-    window.location.href = '/login'; 
-    return; // Oprim execuția restului de cod
-  }
-      const data = await res.json();
+        // Verificăm dacă 401 vine de la Paznic (Single Device) sau e doar o eroare de validare
+        if (data.code === 'SESSION_KICKED' || (data.message && data.message.includes('Sesiune expirată'))) {
+          localStorage.removeItem('token'); 
+          alert("Sesiune expirată! Te-ai conectat de pe alt dispozitiv.");
+          window.location.href = '/login'; 
+          return; 
+        } else {
+          // E o simplă eroare (ex: parola prea scurtă, parola veche nu se potrivește)
+          setError(data.message || 'Eroare la modificarea parolei.');
+          return;
+        }
+      }
 
       if (res.ok) {
-        // Parola a fost schimbată cu succes! Acum îl logăm oficial.
-        localStorage.setItem('token', tempToken);
+        // Parola a fost schimbată cu succes! 
+        // Dacă backend-ul ne dă un token NOU după schimbare, îl folosim pe ăla. Dacă nu, îl ținem pe cel temporar.
+        localStorage.setItem('token', data.token || tempToken);
         localStorage.setItem('role', 'participant');
         navigate('/dashboard');
       } else {

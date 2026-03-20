@@ -23,6 +23,28 @@ const PrinterGrid = () => {
       const res = await fetch('http://localhost:3000/api/queue/printers');
       const data = await res.json();
 
+      const savedRes = localStorage.getItem('activeReservation');
+      if (savedRes) {
+        try {
+          const { printerId } = JSON.parse(savedRes);
+          // Căutăm imprimanta în datele proaspete venite de la backend
+          const realPrinter = data.find(p => p.id === printerId);
+          
+          // Dacă imprimanta a devenit liberă ('free') în backend, dar noi o aveam salvată,
+          // înseamnă că timpul a expirat! Ștergem fantoma din browser.
+          if (realPrinter && realPrinter.status !== 'reserving') {
+             console.log("🧹 Backend-ul a anulat rezervarea. Curățăm memoria browserului.");
+             localStorage.removeItem('activeReservation');
+             setActiveUploadId(null);
+             setReservationToken(null);
+             setSelectedFile(null);
+          }
+        } catch (e) {
+          console.error("Eroare la parsarea localStorage", e);
+        }
+      }
+
+
       if (res.status === 401) {
         localStorage.removeItem('token'); 
         alert("Sesiune expirată! Te-ai conectat de pe alt dispozitiv. Vei fi redirecționat către Login.");
@@ -92,6 +114,17 @@ const PrinterGrid = () => {
   useEffect(() => {
     // Aducem datele la încărcarea paginii
     fetchPrinters();
+
+    const savedRes = localStorage.getItem('activeReservation');
+    if (savedRes) {
+      try {
+        const { printerId, token } = JSON.parse(savedRes);
+        setActiveUploadId(printerId);
+        setReservationToken(token);
+      } catch (e) {
+        console.error("Eroare la citirea rezervării din memorie.");
+      }
+    }
 
     // Ne conectăm la serverul de Sockets
     const socket = io('http://localhost:3000');
@@ -179,6 +212,12 @@ const PrinterGrid = () => {
         // Dacă a reușit să blocheze imprimanta, salvăm token-ul temporar și deschidem fereastra de Upload
         setReservationToken(data.reservationToken);
         setActiveUploadId(printerId);
+
+        localStorage.setItem('activeReservation', JSON.stringify({
+          printerId: printerId,
+          token: data.reservationToken
+        }));
+
         // Serverul a trimis deja prin Socket semnalul către ceilalți că imprimanta e 'reserving'
       } else {
         // Dacă echipa mai are alta rezervată sau la print, afișăm eroarea
@@ -197,6 +236,8 @@ const PrinterGrid = () => {
     setActiveUploadId(null);
     setReservationToken(null);
     setSelectedFile(null);
+
+    localStorage.removeItem('activeReservation');
 
     // 2. Trimitem semnalul la server să o deblocheze în baza de date
     const token = localStorage.getItem('token');
@@ -274,6 +315,10 @@ const PrinterGrid = () => {
         setActiveUploadId(null);
         setSelectedFile(null);
         setReservationToken(null);
+
+
+        localStorage.removeItem('activeReservation');
+
         // Serverul va emite 'printersUpdated' și imprimanta se va face Roșie/Printare Activă
       } else {
         alert("Eroare: " + data.message);

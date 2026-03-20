@@ -50,7 +50,7 @@ const Admin = () => {
         let fileName = '-';
 
         if (p.teamDetails) {
-          userName = p.teamDetails.teamName || 'Echipă Necunoscută';
+          userName = p.teamDetails.name || 'Echipă Necunoscută';
           // Dacă are un fișier în Cloudinary, afișăm doar textul 'Descarcă STL'
           fileName = p.teamDetails.fileUrl ? 'Da' : '-';
         }
